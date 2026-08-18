@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permainan Interaktif: Arena Digital Futuristik</title>
+    <!-- Memuat Tailwind CSS untuk styling responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat PeerJS untuk koneksi P2P -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Memuat jsPDF dan html2canvas untuk fungsionalitas unduh PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --cyber-cyan: #00f3ff;
+            --cyber-magenta: #ff007f;
+            --cyber-blue: #2563eb;
+            --cyber-blue-glow: #3b82f6;
+            --bg-dark: #070a14;
+            --card-glass: rgba(15, 23, 42, 0.75);
+            --text-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.12), transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.12), transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.08), transparent 60%);
+            background-attachment: fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .main-container {
+            background: var(--card-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 1.5rem;
+            box-shadow: 0 0 35px rgba(0, 243, 255, 0.15), 0 0 15px rgba(255, 0, 127, 0.1), inset 0 0 1px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 2.5rem;
+            max-width: 1100px;
+            width: 95%;
+        }
+
+        /* Neon & Gradient Glow Texts */
+        .text-glow-cyan {
+            color: var(--cyber-cyan);
+            text-shadow: 0 0 12px rgba(0, 243, 255, 0.6);
+        }
+        .text-glow-magenta {
+            color: var(--cyber-magenta);
+            text-shadow: 0 0 12px rgba(255, 0, 127, 0.6);
+        }
+        .text-gradient-futuristic {
+            background: linear-gradient(135deg, #00f3ff 0%, #3b82f6 50%, #ff007f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.3));
+        }
+
+        /* Futuristic Cyber Buttons */
+        .btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            font-weight: 600;
+        }
+        .btn-cyber-cyan {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            box-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
+            color: white;
+        }
+        .btn-cyber-cyan:hover:not(:disabled) {
+            background: linear-gradient(135deg, #00e5ff 0%, #0052d4 100%);
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.7);
+            transform: translateY(-2px);
+        }
+        .btn-cyber-magenta {
+            background: linear-gradient(135deg, #ff007f 0%, #7928ca 100%);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+            color: white;
+        }
+        .btn-cyber-magenta:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ff2a9d 0%, #9a208c 100%);
+            box-shadow: 0 0 25px rgba(255, 42, 157, 0.7);
+            transform: translateY(-2px);
+        }
+        .btn-cyber-dark {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #e2e8f0;
+        }
+        .btn-cyber-dark:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.9);
+            border-color: var(--cyber-cyan);
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+            color: #ffffff;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !allowed;
+            box-shadow: none !allowed;
+        }
+
+        /* Modals Glassmorphism */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: rgba(15, 23, 42, 0.95);
+            color: var(--text-light);
+            padding: 2rem;
+            border-radius: 1.25rem;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2), 0 0 20px rgba(255, 0, 127, 0.15);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+        }
+        
+        /* Tabs */
+        .tab-btn {
+            cursor: pointer;
+            padding: 0.6rem 1.2rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            background: rgba(15, 23, 42, 0.6);
+            color: #94a3b8;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #00f3ff 0%, #0072ff 100%);
+            color: #0f172a;
+            font-weight: 700;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+            border-color: #00f3ff;
+        }
+        .tab-btn:not(.active):hover {
+            color: #f1f5f9;
+            border-color: rgba(255, 0, 127, 0.5);
+            background: rgba(30, 41, 59, 0.8);
+        }
+        
+        /* Input & Form Control Styling */
+        input[type="text"], input[type="password"], textarea, select {
+            background-color: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #64748b;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--cyber-cyan);
+            outline: none;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5), inset 0 0 5px rgba(0, 243, 255, 0.2);
+        }
+
+        #puzzle-canvas, #creator-puzzle-preview {
+            border: 2px solid var(--cyber-cyan);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            border-radius: 0.75rem;
+            cursor: pointer;
+        }
+        
+        /* Gaya Khusus Game Wordsearch Cyberpunk */
+        .wordsearch-grid {
+            display: grid;
+            grid-template-columns: repeat(20, minmax(0, 1fr));
+            gap: 2px;
+            border: 2px solid var(--cyber-cyan);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            background-color: #0f172a;
+            padding: 6px;
+            border-radius: 0.75rem;
+            touch-action: none;
+            user-select: none;
+        }
+        .grid-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            background-color: rgba(30, 41, 59, 0.9);
+            color: #38bdf8;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid rgba(0, 243, 255, 0.1);
+        }
+        .grid-cell.selected {
+            background-color: var(--cyber-magenta) !important;
+            color: white !important;
+            box-shadow: 0 0 12px var(--cyber-magenta);
+        }
+        .grid-cell.word-found {
+            background-color: var(--cyber-cyan) !important;
+            color: #0f172a !important;
+            box-shadow: 0 0 12px var(--cyber-cyan);
+            font-weight: 900;
+        }
+        .wordsearch-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .wordsearch-word {
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background-color: rgba(30, 41, 59, 0.8);
+            color: #94a3b8;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+        }
+        .wordsearch-word.found {
+            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-blue)) !important;
+            color: #0f172a !important;
+            text-decoration: line-through;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        /* Gaya Khusus Game Whack-a-Mole Cyberpunk */
+        #whack-a-mole-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            max-width: 450px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .mole-hole {
+            position: relative;
+            aspect-ratio: 1.2;
+            background-color: #0f172a;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 243, 255, 0.2);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+        }
+        .mole {
+            position: absolute;
+            bottom: 0;
+            left: 5%;
+            width: 90%;
+            height: 85%;
+            background: linear-gradient(180deg, var(--cyber-magenta) 0%, #7928ca 100%);
+            border-radius: 1rem 1rem 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transform: translateY(100%);
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.6);
+            border: 1px solid var(--cyber-magenta);
+        }
+        .mole.up {
+            transform: translateY(0);
+        }
+
+        /* Gaya Khusus Game Urutan Kata (Rank Order) Cyberpunk */
+        .rank-order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .rank-order-item {
+            background: rgba(30, 41, 59, 0.8);
+            color: #f1f5f9;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 0.85rem 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .rank-order-item:hover {
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+            transform: translateY(-2px);
+            border-color: var(--cyber-cyan);
+            background: rgba(15, 23, 42, 0.9);
+        }
+        .rank-order-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            border-color: var(--cyber-magenta);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.6);
+        }
+
+        /* Hangman Futuristik */
+        #hangman-canvas {
+            background-color: #0b1329;
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+        #hangman-word-display {
+            color: var(--cyber-cyan);
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.7);
+        }
+        .key {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(37, 99, 235, 0.3));
+            color: var(--cyber-cyan);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            font-weight: 700;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .key:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-blue));
+            color: #0f172a;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.7);
+            transform: scale(1.05);
+        }
+        .key:disabled {
+            background: rgba(30, 41, 59, 0.4);
+            color: #475569;
+            border-color: rgba(255, 255, 255, 0.05);
+            cursor: not-allowed;
+        }
+
+        /* Custom Scrollbar Futuristik */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--cyber-cyan), var(--cyber-magenta));
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="main-container" class="main-container">
+        <!-- Tampilan Awal untuk Memilih Peran -->
+        <div id="start-screen">
+            <div class="flex justify-center mb-8">
+                <img id="school-logo" 
+                     src="https://smartcap.or.id/assets/logo.png" 
+                     alt="Logo Sekolah" 
+                     class="w-24 h-24 object-contain rounded-full shadow-[0_0_20px_rgba(0,243,255,0.6)] border-2 border-cyan-400 p-1 bg-slate-900" 
+                     onerror="this.onerror=null;this.src='https://placehold.co/100x100/0f172a/00f3ff?text=Logo';">
+            </div>
+            
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-center mb-4 font-orbitron text-gradient-futuristic tracking-wide">
+                ARENA PERMAINAN DIGITAL
+            </h1>
+            <p class="text-center text-slate-300 mb-8 text-sm sm:text-base font-light">
+                Platform Edukasi Interaktif Futuristik. Pilih peran Anda untuk memulai:
+            </p>
+            <div class="flex flex-col sm:flex-row gap-5 max-w-md mx-auto">
+                <button onclick="showGuruLogin()" class="btn btn-cyber-cyan w-full px-8 py-4 rounded-xl text-lg font-orbitron tracking-wider">
+                    PEMBUAT KONTEN
+                </button>
+                <button onclick="showSiswaLogin()" class="btn btn-cyber-magenta w-full px-8 py-4 rounded-xl text-lg font-orbitron tracking-wider">
+                    PEMAIN
+                </button>
+            </div>
+        </div>
+
+        <!-- Tampilan Login untuk Pembuat -->
+        <div id="guru-login-screen" class="hidden max-w-md mx-auto">
+            <h1 class="text-3xl font-bold text-center mb-2 font-orbitron text-glow-cyan">Akses Panel Kontrol</h1>
+            <p class="text-center text-slate-400 mb-6 text-sm">Masukkan kredensial keamanan Anda.</p>
+            <div class="space-y-4">
+                <input type="text" id="guru-username-input" placeholder="Username (adminoke)" class="w-full p-4 text-center text-lg">
+                <input type="password" id="guru-pin-input" placeholder="PIN (12345)" class="w-full p-4 text-center text-lg">
+                <button onclick="handleGuruLogin()" class="btn btn-cyber-cyan w-full px-6 py-4 rounded-xl text-lg font-orbitron">LOGIN</button>
+                <button onclick="backToRoleSelection()" class="btn btn-cyber-dark w-full px-6 py-2 rounded-xl font-semibold">Kembali</button>
+            </div>
+        </div>
+
+        <!-- Tampilan untuk Pemain memasukkan Nama dan ID Pembuat -->
+        <div id="siswa-login-screen" class="hidden max-w-md mx-auto">
+            <h1 class="text-3xl font-bold text-center mb-2 font-orbitron text-glow-magenta">Bergabung Arena</h1>
+            <p class="text-center text-slate-400 mb-6 text-sm">Siapkan Nama Anda & Kode Sesi dari Pembuat.</p>
+            <div class="space-y-4">
+                <input type="text" id="siswa-nama-input" placeholder="Ketik Nama Anda di sini..." class="w-full p-4 text-center text-lg">
+                <input type="text" id="guru-id-input" placeholder="Kode Sesi (misal: tangan-meja)..." class="w-full p-4 text-center text-lg">
+                <button onclick="startSiswaQuiz()" class="btn btn-cyber-magenta w-full px-6 py-4 rounded-xl text-lg font-orbitron">GABUNG ARENA</button>
+                <button onclick="backToRoleSelection()" class="btn btn-cyber-dark w-full px-6 py-2 rounded-xl font-semibold">Kembali</button>
+            </div>
+        </div>
+
+        <!-- Tampilan untuk Pembuat -->
+        <div id="guru-view" class="hidden">
+            <h1 class="text-3xl font-bold text-center mb-4 font-orbitron text-gradient-futuristic">PANEL PEMBUAT KONTEN</h1>
+            <div class="bg-slate-900/80 p-5 rounded-2xl text-center mb-6 border border-cyan-500/40 shadow-[0_0_20px_rgba(0,243,255,0.15)]">
+                <p class="font-semibold text-slate-300 text-sm">KODE SESI AKTIF:</p>
+                <p id="guru-id" class="text-2xl font-bold my-2 bg-slate-950/80 p-3 rounded-xl select-all text-glow-cyan font-orbitron tracking-widest border border-cyan-400/30">Memuat ID...</p>
+                <p class="text-xs text-slate-400">Bagikan kode berbasis kata di atas kepada para pemain untuk terhubung.</p>
+            </div>
+
+            <!-- Panel Pembuat Item Permainan -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3 font-orbitron text-glow-cyan">Buat Item Permainan</h2>
+                <div class="flex justify-center flex-wrap gap-2 mb-4">
+                    <button id="tab-mc" class="tab-btn active" onclick="switchTab('mc')">Pilihan Ganda</button>
+                    <button id="tab-fill-in" class="tab-btn" onclick="switchTab('fill-in')">Isian</button>
+                    <button id="tab-picture-puzzle" class="tab-btn" onclick="switchTab('picture-puzzle')">Puzzle Gambar</button>
+                    <button id="tab-un-jumble" class="tab-btn" onclick="switchTab('un-jumble')">Unjumble</button>
+                    <button id="tab-wordsearch" class="tab-btn" onclick="switchTab('wordsearch')">Wordsearch</button>
+                    <button id="tab-whack-a-mole" class="tab-btn" onclick="switchTab('whack-a-mole')">Whack-a-Mole</button>
+                    <button id="tab-rank-order" class="tab-btn" onclick="switchTab('rank-order')">Urutan Kata</button>
+                    <button id="tab-hangman" class="tab-btn" onclick="switchTab('hangman')">Hangman</button>
+                </div>
+
+                <!-- Form Hangman -->
+                <div id="creator-hangman" class="hidden space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <input type="text" id="hangman-word-input" placeholder="Kata Bahasa Inggris (huruf kapital, misal: COMPUTER)" class="w-full p-3 border rounded uppercase">
+                    <input type="text" id="hangman-clue-input" placeholder="Petunjuk (Bahasa Indonesia, misal: Perangkat elektronik pengolah data)" class="w-full p-3 border rounded">
+                    <button onclick="addItemToList('hangman')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Hangman</button>
+                </div>
+
+                <!-- Form Pilihan Ganda -->
+                <div id="creator-mc" class="space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <textarea id="question-text" placeholder="Tulis pertanyaan di sini..." class="w-full p-3 border rounded"></textarea>
+                    <input type="text" id="option-a" placeholder="Pilihan A" class="w-full p-2 border rounded">
+                    <input type="text" id="option-b" placeholder="Pilihan B" class="w-full p-2 border rounded">
+                    <input type="text" id="option-c" placeholder="Pilihan C" class="w-full p-2 border rounded">
+                    <input type="text" id="option-d" placeholder="Pilihan D" class="w-full p-2 border rounded">
+                    <select id="correct-answer" class="w-full p-3 border rounded">
+                        <option value="0">Jawaban Benar: A</option>
+                        <option value="1">Jawaban Benar: B</option>
+                        <option value="2">Jawaban Benar: C</option>
+                        <option value="3">Jawaban Benar: D</option>
+                    </select>
+                    <button onclick="addItemToList('mc')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Pilihan Ganda</button>
+                </div>
+                
+                <!-- Form Isian -->
+                <div id="creator-fill-in" class="hidden space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <textarea id="fill-in-clue" placeholder="Tulis petunjuk isian di sini..." class="w-full p-3 border rounded"></textarea>
+                    <input type="text" id="fill-in-answer" placeholder="Jawaban (satu kata/frasa)" class="w-full p-3 border rounded">
+                    <button onclick="addItemToList('fill-in')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Isian</button>
+                </div>
+
+                <!-- Form Puzzle Gambar -->
+                <div id="creator-picture-puzzle" class="hidden space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <input type="text" id="image-url" placeholder="URL Gambar untuk puzzle..." class="w-full p-3 border rounded">
+                    <p class="text-center text-xs text-slate-400">- ATAU UPLOAD GAMBAR -</p>
+                    <input type="file" id="image-file-input" accept="image/*" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-950 file:text-cyan-400 hover:file:bg-cyan-900">
+                    <select id="grid-size" class="w-full p-3 border rounded">
+                        <option value="3x3">3x3 (Mudah)</option>
+                        <option value="4x4">4x4 (Sedang)</option>
+                        <option value="5x5">5x5 (Sulit)</option>
+                    </select>
+                    <canvas id="creator-puzzle-preview" width="200" height="200" class="mx-auto border rounded-lg"></canvas>
+                    <button onclick="shuffleAndPreview()" class="btn w-full px-6 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl hover:bg-amber-400">Acak & Pratinjau</button>
+                    <button onclick="addItemToList('picture-puzzle')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Puzzle Gambar</button>
+                </div>
+
+                <!-- Form Unjumble -->
+                <div id="creator-un-jumble" class="hidden space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <textarea id="un-jumble-answer" placeholder="Tulis kata atau kalimat yang benar..." class="w-full p-3 border rounded"></textarea>
+                    <div class="flex items-center space-x-4">
+                        <label class="text-slate-300 font-medium">Jenis:</label>
+                        <select id="un-jumble-type" class="p-3 border rounded">
+                            <option value="word">Kata (acak huruf)</option>
+                            <option value="sentence">Kalimat (acak kata)</option>
+                        </select>
+                    </div>
+                    <button onclick="addItemToList('un-jumble')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Unjumble</button>
+                </div>
+
+                <!-- Form Wordsearch -->
+                <div id="creator-wordsearch" class="hidden space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <textarea id="wordsearch-words" placeholder="Masukkan kata-kata yang harus dicari (satu per baris, contoh: INDONESIA)..." class="w-full p-3 border rounded"></textarea>
+                    <textarea id="wordsearch-clue" placeholder="Tambahkan petunjuk untuk teka-teki ini..." class="w-full p-3 border rounded"></textarea>
+                    <button onclick="addItemToList('wordsearch')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Wordsearch</button>
+                </div>
+
+                <!-- Form Whack-a-Mole -->
+                <div id="creator-whack-a-mole" class="hidden space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <p class="text-sm text-slate-400">Buat pertanyaan untuk permainan Whack-a-Mole.</p>
+                    <textarea id="whack-a-mole-clue" placeholder="Tulis petunjuk/pertanyaan di sini..." class="w-full p-3 border rounded"></textarea>
+                    <input type="text" id="whack-a-mole-correct-answer" placeholder="Jawaban Benar" class="w-full p-3 border rounded">
+                    <p class="text-sm text-slate-400">Masukkan kata/frasa yang salah sebagai distraktor (satu per baris).</p>
+                    <textarea id="whack-a-mole-incorrect-answers" placeholder="Jawaban Salah..." class="w-full p-3 border rounded"></textarea>
+                    <button onclick="addItemToList('whack-a-mole')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Whack-a-Mole</button>
+                </div>
+
+                <!-- Form Rank Order -->
+                <div id="creator-rank-order" class="hidden space-y-3 bg-slate-900/90 p-6 rounded-xl border border-cyan-500/30 shadow-lg">
+                    <textarea id="rank-order-clue" placeholder="Tambahkan petunjuk untuk urutan ini..." class="w-full p-3 border rounded"></textarea>
+                    <textarea id="rank-order-items" placeholder="Masukkan item dalam urutan yang benar dari atas ke bawah (satu per baris)..." class="w-full p-3 border rounded"></textarea>
+                    <button onclick="addItemToList('rank-order')" class="btn btn-cyber-magenta w-full px-6 py-3 rounded-xl">Tambah Urutan Kata</button>
+                </div>
+            </div>
+            
+            <!-- Daftar Item yang Dibuat -->
+            <div id="question-list-container" class="mb-6">
+                <h3 class="text-xl font-semibold mb-2 font-orbitron text-glow-cyan">Daftar Item Permainan (<span id="question-count">0</span>)</h3>
+                <div id="question-list" class="space-y-2 max-h-48 overflow-y-auto p-4 bg-slate-900/70 rounded-xl border border-slate-700"></div>
+                <div class="flex flex-col sm:flex-row gap-2 mt-4">
+                    <button onclick="saveItems()" class="btn w-full sm:w-1/2 px-4 py-3 btn-cyber-dark rounded-xl font-semibold">Simpan Soal (.JSON)</button>
+                    <button onclick="loadItems()" class="btn w-full sm:w-1/2 px-4 py-3 btn-cyber-dark rounded-xl font-semibold">Muat Soal (.JSON)</button>
+                </div>
+                <input type="file" id="load-file-input" class="hidden" accept=".json">
+                <div class="flex flex-col sm:flex-row gap-3 mt-3">
+                    <button onclick="sendGame()" id="send-quiz-btn" class="btn btn-cyber-cyan w-full sm:w-1/2 px-6 py-4 rounded-xl font-orbitron" disabled>Kirim Permainan ke Pemain</button>
+                    <button onclick="resetGame()" id="reset-game-btn" class="btn w-full sm:w-1/2 px-6 py-4 bg-rose-600 text-white rounded-xl font-semibold hover:bg-rose-700 shadow-[0_0_15px_rgba(225,29,72,0.4)]" disabled>Reset Permainan</button>
+                </div>
+            </div>
+
+            <!-- Papan Peringkat Langsung -->
+            <h2 class="text-2xl font-semibold mb-3 font-orbitron text-glow-magenta">Papan Peringkat Langsung</h2>
+            <div id="live-leaderboard-container-guru" class="space-y-3">
+                <p class="text-slate-500 text-center">Belum ada pemain yang bergabung.</p>
+            </div>
+
+            <div class="mt-8 flex justify-center">
+                <button onclick="downloadAllResults()" id="download-all-results-btn" class="btn btn-cyber-cyan px-8 py-4 rounded-xl text-lg font-orbitron" disabled>Unduh Semua Hasil (PDF)</button>
+            </div>
+        </div>
+
+        <!-- Tampilan untuk Pemain (Permainan) -->
+        <div id="siswa-view" class="hidden"></div>
+    </div>
+
+    <!-- Modal untuk menampilkan hasil detail pemain -->
+    <div id="result-modal" class="modal-overlay hidden">
+        <div class="modal-content w-full lg:w-3/4">
+            <div id="modal-content-body"></div>
+            <div class="mt-6 text-right space-x-3">
+                <button id="download-pdf-btn" class="btn btn-cyber-cyan px-6 py-2 rounded-xl">Unduh PDF</button>
+                <button onclick="closeResultModal()" class="btn btn-cyber-dark px-6 py-2 rounded-xl font-semibold">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pesan Kustom -->
+    <div id="message-modal" class="modal-overlay hidden">
+        <div class="bg-slate-900 p-6 rounded-xl shadow-2xl text-center border border-cyan-400/40 max-w-sm w-full">
+            <p id="modal-message" class="text-lg font-semibold mb-4 text-slate-200"></p>
+            <button onclick="closeMessageModal()" class="btn btn-cyber-cyan px-6 py-2 rounded-xl">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Kustom -->
+    <div id="confirmation-modal" class="modal-overlay hidden">
+        <div class="bg-slate-900 p-6 rounded-xl shadow-2xl text-center max-w-sm w-full border border-rose-500/40">
+            <p id="confirmation-message" class="text-lg font-semibold mb-6 text-slate-200"></p>
+            <div class="flex justify-around">
+                <button id="confirm-yes-btn" class="btn w-5/12 px-6 py-2 bg-rose-600 text-white rounded-xl font-semibold hover:bg-rose-700">Ya</button>
+                <button id="confirm-no-btn" class="btn w-5/12 px-6 py-2 btn-cyber-dark rounded-xl font-semibold">Tidak</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let peer = null, guruId = null, siswaNama = '', connections = {}, studentData = {}, createdItems = [], currentShuffledOrder = null, currentPuzzleImageSource = null;
+        const startScreen = document.getElementById('start-screen'), guruLoginScreen = document.getElementById('guru-login-screen'), siswaLoginScreen = document.getElementById('siswa-login-screen'), guruView = document.getElementById('guru-view'), siswaView = document.getElementById('siswa-view'), guruIdEl = document.getElementById('guru-id'), liveLeaderboardContainerGuru = document.getElementById('live-leaderboard-container-guru'), resultModal = document.getElementById('result-modal'), modalContentBody = document.getElementById('modal-content-body'), downloadPdfBtn = document.getElementById('download-pdf-btn'), resetGameBtn = document.getElementById('reset-game-btn'), sendQuizBtn = document.getElementById('send-quiz-btn'), downloadAllResultsBtn = document.getElementById('download-all-results-btn');
+
+        // Daftar kata Bahasa Indonesia untuk pembuatan ID Sesi berbasis kata
+        const kataSesiList = [
+            "tangan", "kaki", "meja", "kursi", "buku", "pensil", "kucing", "bintang",
+            "bulan", "awan", "hujan", "pohon", "bunga", "pantai", "gunung", "sungai",
+            "rumah", "sekolah", "taman", "sepeda", "mobil", "pesawat", "perahu", "ikan",
+            "burung", "gajah", "kelinci", "apel", "pisang", "jeruk", "mangga", "roti",
+            "susu", "keju", "cokelat", "sendok", "garpu", "piring", "gelas", "topi"
+        ];
+
+        function generateWordId() {
+            const k1 = kataSesiList[Math.floor(Math.random() * kataSesiList.length)];
+            const k2 = kataSesiList[Math.floor(Math.random() * kataSesiList.length)];
+            return `${k1}-${k2}`;
+        }
+
+        // --- Fungsi Modal Kustom ---
+        function showMessageModal(message) {
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('message-modal').classList.remove('hidden');
+        }
+        function closeMessageModal() {
+            document.getElementById('message-modal').classList.add('hidden');
+        }
+
+        function showConfirmationModal(message, onConfirm) {
+            const confirmationModal = document.getElementById('confirmation-modal');
+            document.getElementById('confirmation-message').textContent = message;
+            
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            const noBtn = document.getElementById('confirm-no-btn');
+
+            yesBtn.onclick = () => {
+                onConfirm(true);
+                confirmationModal.classList.add('hidden');
+            };
+            
+            noBtn.onclick = () => {
+                onConfirm(false);
+                confirmationModal.classList.add('hidden');
+            };
+            
+            confirmationModal.classList.remove('hidden');
+        }
+
+        function showGuruLogin() { startScreen.classList.add('hidden'); guruLoginScreen.classList.remove('hidden'); }
+        function handleGuruLogin() {
+            if (document.getElementById('guru-username-input').value === 'adminoke' && document.getElementById('guru-pin-input').value === '12345') {
+                guruLoginScreen.classList.add('hidden'); initGuru();
+            } else { showMessageModal('Username atau PIN salah! (Petunjuk: Username adminoke, PIN 12345)'); }
+        }
+        function initGuru(customId = null) {
+            guruView.classList.remove('hidden'); 
+            const sessionWordId = customId || generateWordId();
+            
+            if (peer) {
+                try { peer.destroy(); } catch(e) {}
+            }
+
+            peer = new Peer(sessionWordId);
+            
+            peer.on('open', id => { 
+                guruIdEl.textContent = id; 
+            });
+
+            peer.on('error', err => {
+                if (err.type === 'unavailable-id') {
+                    initGuru(generateWordId());
+                } else {
+                    console.error('PeerJS error:', err);
+                }
+            });
+
+            peer.on('connection', conn => {
+                conn.on('data', data => {
+                    if (data.type === 'register') {
+                        connections[conn.peer] = conn;
+                        studentData[conn.peer] = { id: conn.peer, name: data.name, score: 0, progress: 0, answers: [], gameData: [], completionTime: null };
+                        updateLeaderboard();
+                        resetGameBtn.disabled = false;
+                    } else if (data.type === 'updateProgress') {
+                        const student = studentData[conn.peer];
+                        if (student) {
+                            student.answers.push(data.payload.lastAnswer); student.progress = data.payload.progress;
+                            if (data.payload.lastAnswer.isCorrect) {
+                                const points = data.payload.lastAnswer.points || 1;
+                                student.score += points;
+                            }
+                            if (data.payload.lastAnswer.totalTime !== undefined) {
+                                student.answers[student.answers.length - 1].totalTime = data.payload.lastAnswer.totalTime;
+                            }
+                            updateLeaderboard();
+                        }
+                    } else if (data.type === 'finishGame') {
+                        const student = studentData[conn.peer];
+                        if (student) {
+                            student.completionTime = data.payload.completionTime;
+                            updateLeaderboard();
+                        }
+                    }
+                });
+            });
+            peer.on('disconnected', () => {
+                if (Object.keys(connections).length === 0) {
+                    resetGameBtn.disabled = true;
+                    downloadAllResultsBtn.disabled = true;
+                }
+            });
+            document.getElementById('load-file-input').addEventListener('change', handleFileLoad);
+        }
+
+        function showSiswaLogin() { startScreen.classList.add('hidden'); siswaLoginScreen.classList.remove('hidden'); }
+        function startSiswaQuiz() {
+            const inputNama = document.getElementById('siswa-nama-input').value, inputId = document.getElementById('guru-id-input').value;
+            if (inputNama.trim() && inputId.trim()) {
+                siswaNama = inputNama.trim(); 
+                guruId = inputId.trim().toLowerCase().replace(/\s+/g, '-');
+                siswaLoginScreen.classList.add('hidden'); siswaView.classList.remove('hidden');
+                siswaView.innerHTML = `<p class="text-xl text-center text-cyan-400 font-orbitron p-8">Menunggu permainan dari pembuat...</p>`;
+                peer = new Peer();
+                peer.on('open', id => {
+                    const conn = peer.connect(guruId);
+                    conn.on('open', () => {
+                        conn.send({ type: 'register', name: siswaNama });
+                        conn.on('data', data => {
+                            if (data.type === 'startGame') {
+                                data.payload.forEach(item => {
+                                    item.totalTime = 0;
+                                });
+                                launchGame(data.payload, conn);
+                            } else if (data.type === 'resetGame') {
+                                siswaView.innerHTML = `<p class="text-xl text-center text-slate-300 font-orbitron p-8">Permainan telah direset oleh Pembuat. Menunggu permainan baru...</p>`;
+                                showMessageModal('Permainan telah direset.');
+                            } else if (data.type === 'kickPlayer') {
+                                siswaView.innerHTML = `<p class="text-xl text-center text-rose-500 font-orbitron font-bold p-8">Anda telah dikeluarkan dari permainan.</p>`;
+                                peer.destroy();
+                            }
+                        });
+                    });
+                });
+            } else { showMessageModal("Nama Pemain dan ID Pembuat tidak boleh kosong."); }
+        }
+        function backToRoleSelection() { guruLoginScreen.classList.add('hidden'); siswaLoginScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); }
+
+        function switchTab(tabName) {
+            ['mc', 'fill-in', 'picture-puzzle', 'un-jumble', 'wordsearch', 'whack-a-mole', 'rank-order', 'hangman'].forEach(name => {
+                document.getElementById(`creator-${name}`).classList.toggle('hidden', name !== tabName);
+                document.getElementById(`tab-${name}`).classList.toggle('active', name === tabName);
+            });
+        }
+        
+        function resendGameToPlayer(playerId) {
+            const conn = connections[playerId];
+            if (conn && conn.open) {
+                if (createdItems.length === 0) {
+                    showMessageModal("Tidak ada soal yang dibuat untuk dikirim ulang.");
+                    return;
+                }
+                conn.send({ type: 'startGame', payload: createdItems });
+                showMessageModal(`Permainan berhasil dikirim ulang ke pemain ${studentData[playerId].name}.`);
+            } else {
+                showMessageModal("Pemain tidak terhubung atau koneksi terputus.");
+            }
+        }
+
+        function addItemToList(type) {
+            let itemPayload = { type };
+            if (type === 'mc') {
+                itemPayload.question = document.getElementById('question-text').value;
+                itemPayload.options = Array.from({length: 4}, (_, i) => document.getElementById(`option-${'abcd'[i]}`).value);
+                itemPayload.answer = parseInt(document.getElementById('correct-answer').value);
+                if (!itemPayload.question || itemPayload.options.some(opt => !opt)) return showMessageModal("Isi semua kolom soal dan pilihan.");
+                document.getElementById('question-text').value = ''; ['a', 'b', 'c', 'd'].forEach(o => document.getElementById(`option-${o}`).value = '');
+            } else if (type === 'fill-in') {
+                itemPayload.clue = document.getElementById('fill-in-clue').value; itemPayload.answer = document.getElementById('fill-in-answer').value;
+                if (!itemPayload.clue || !itemPayload.answer) return showMessageModal("Isi kolom petunjuk dan jawaban.");
+                document.getElementById('fill-in-clue').value = ''; document.getElementById('fill-in-answer').value = '';
+            } else if (type === 'picture-puzzle') {
+                if (!currentShuffledOrder || !currentPuzzleImageSource) return showMessageModal("Harap pilih gambar dan acak terlebih dahulu.");
+                itemPayload.imageUrl = currentPuzzleImageSource;
+                itemPayload.gridSize = document.getElementById('grid-size').value;
+                itemPayload.shuffledOrder = currentShuffledOrder;
+                document.getElementById('image-url').value = '';
+                document.getElementById('image-file-input').value = '';
+                const previewCtx = document.getElementById('creator-puzzle-preview').getContext('2d');
+                previewCtx.clearRect(0, 0, 200, 200);
+                currentShuffledOrder = null;
+                currentPuzzleImageSource = null;
+            } else if (type === 'un-jumble') {
+                const answer = document.getElementById('un-jumble-answer').value;
+                const unjumbleType = document.getElementById('un-jumble-type').value;
+                if (!answer.trim()) return showMessageModal("Isi kata atau kalimat yang benar.");
+                itemPayload.answer = answer.trim();
+                itemPayload.unjumbleType = unjumbleType;
+                itemPayload.scrambled = scrambleString(itemPayload.answer, unjumbleType);
+                document.getElementById('un-jumble-answer').value = '';
+            } else if (type === 'wordsearch') {
+                const wordsInput = document.getElementById('wordsearch-words').value;
+                const words = wordsInput.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length > 0 && w.length <= 20);
+                const clue = document.getElementById('wordsearch-clue').value.trim();
+
+                if (words.length === 0) return showMessageModal("Masukkan setidaknya satu kata untuk teka-teki.");
+                
+                const gridData = generateWordsearchGrid(words);
+                if (!gridData) {
+                    return showMessageModal("Gagal membuat teka-teki. Coba kata yang lebih sedikit atau lebih pendek.");
+                }
+
+                itemPayload.words = gridData.placedWords.sort();
+                itemPayload.grid = gridData.grid;
+                itemPayload.clue = clue;
+
+                document.getElementById('wordsearch-words').value = '';
+                document.getElementById('wordsearch-clue').value = '';
+            } else if (type === 'whack-a-mole') {
+                const clue = document.getElementById('whack-a-mole-clue').value.trim();
+                const correctAnswer = document.getElementById('whack-a-mole-correct-answer').value.trim();
+                const incorrectAnswers = document.getElementById('whack-a-mole-incorrect-answers').split('\n').map(m => m.trim()).filter(m => m.length > 0);
+                
+                if (!clue || !correctAnswer || incorrectAnswers.length === 0) {
+                    return showMessageModal("Harap isi semua kolom untuk Whack-a-Mole.");
+                }
+                itemPayload.clue = clue;
+                itemPayload.correctAnswer = correctAnswer;
+                itemPayload.incorrectAnswers = incorrectAnswers;
+                
+                document.getElementById('whack-a-mole-clue').value = '';
+                document.getElementById('whack-a-mole-correct-answer').value = '';
+                document.getElementById('whack-a-mole-incorrect-answers').value = '';
+            } else if (type === 'rank-order') {
+                const clue = document.getElementById('rank-order-clue').value.trim();
+                const items = document.getElementById('rank-order-items').value.split('\n').map(i => i.trim()).filter(i => i.length > 0);
+                if (items.length < 2) {
+                    return showMessageModal("Harap masukkan setidaknya dua item untuk diurutkan.");
+                }
+                itemPayload.clue = clue;
+                itemPayload.items = items;
+                itemPayload.scrambledItems = [...items].sort(() => Math.random() - 0.5);
+                itemPayload.totalTime = 0;
+                document.getElementById('rank-order-clue').value = '';
+                document.getElementById('rank-order-items').value = '';
+            } else if (type === 'hangman') {
+                const word = document.getElementById('hangman-word-input').value.trim().toUpperCase();
+                const clue = document.getElementById('hangman-clue-input').value.trim();
+                if (!word || !clue) return showMessageModal("Harap isi kata dan petunjuk.");
+                itemPayload.word = word;
+                itemPayload.clue = clue;
+                document.getElementById('hangman-word-input').value = '';
+                document.getElementById('hangman-clue-input').value = '';
+            }
+            createdItems.push(itemPayload); renderItemList();
+        }
+
+        function kickPlayer(playerId) {
+            showConfirmationModal('Apakah Anda yakin ingin mengeluarkan pemain ini?', (isConfirmed) => {
+                if (isConfirmed) {
+                    const conn = connections[playerId];
+                    if (conn && conn.open) {
+                        conn.send({ type: 'kickPlayer' });
+                        conn.close();
+                    }
+                    delete connections[playerId];
+                    delete studentData[playerId];
+                    updateLeaderboard();
+                    renderItemList();
+                    showMessageModal('Pemain berhasil dikeluarkan.');
+                }
+            });
+        }
+
+        function generateWordsearchGrid(words) {
+            const gridSize = 20;
+            const grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+            const directions = [
+                { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+                { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
+                { dx: 1, dy: 1 }, { dx: 1, dy: -1 },
+                { dx: -1, dy: 1 }, { dx: -1, dy: -1 }
+            ];
+            
+            let placedWords = [];
+            const sortedWords = words.sort((a, b) => b.length - a.length);
+
+            for (const word of sortedWords) {
+                let attempts = 0;
+                let isPlaced = false;
+                while (attempts < 50 && !isPlaced) {
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    const startX = Math.floor(Math.random() * gridSize);
+                    const startY = Math.floor(Math.random() * gridSize);
+
+                    let canPlace = true;
+                    let tempGrid = JSON.parse(JSON.stringify(grid));
+                    
+                    for (let i = 0; i < word.length; i++) {
+                        const newX = startX + i * dir.dx;
+                        const newY = startY + i * dir.dy;
+
+                        if (newX < 0 || newX >= gridSize || newY < 0 || newY >= gridSize) {
+                            canPlace = false;
+                            break;
+                        }
+                        if (tempGrid[newY][newX] !== null && tempGrid[newY][newX] !== word[i]) {
+                            canPlace = false;
+                            break;
+                        }
+                        tempGrid[newY][newX] = word[i];
+                    }
+
+                    if (canPlace) {
+                        for (let i = 0; i < word.length; i++) {
+                            const newX = startX + i * dir.dx;
+                            const newY = startY + i * dir.dy;
+                            grid[newY][newX] = word[i];
+                        }
+                        placedWords.push(word);
+                        isPlaced = true;
+                    }
+                    attempts++;
+                }
+            }
+
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (grid[y][x] === null) {
+                        grid[y][x] = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                    }
+                }
+            }
+            
+            return { grid, placedWords };
+        }
+
+        function scrambleString(str, type) {
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+            if (type === 'word') {
+                return shuffle(str.split('')).join('');
+            } else if (type === 'sentence') {
+                return shuffle(str.split(' ')).join(' ');
+            }
+            return str;
+        }
+
+        function shuffleAndPreview() {
+            const file = document.getElementById('image-file-input').files[0];
+            const url = document.getElementById('image-url').value;
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    currentPuzzleImageSource = e.target.result;
+                    runPreview(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else if (url) {
+                currentPuzzleImageSource = url;
+                runPreview(url);
+            } else {
+                return showMessageModal('Pilih file gambar atau masukkan URL terlebih dahulu.');
+            }
+        }
+        function runPreview(imageSrc) {
+            const gridSize = document.getElementById('grid-size').value;
+            const canvas = document.getElementById('creator-puzzle-preview');
+            const ctx = canvas.getContext('2d');
+            const [cols, rows] = gridSize.split('x').map(Number);
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+
+            if (imageSrc.startsWith('data:')) {
+                img.src = imageSrc;
+            } else {
+                img.src = `https://proxy.cors.sh/${imageSrc}`;
+            }
+
+            img.onload = () => {
+                const pieceWidth = canvas.width / cols;
+                const pieceHeight = canvas.height / rows;
+                let positions = [];
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        positions.push({ dx: x, dy: y });
+                    }
+                }
+                positions.sort(() => 0.5 - Math.random());
+                currentShuffledOrder = positions;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < positions.length; i++) {
+                    const sx = i % cols;
+                    const sy = Math.floor(i / cols);
+                    const pos = positions[i];
+                    ctx.drawImage(img, sx * (img.width / cols), sy * (img.height / rows), img.width / cols, img.height / rows, pos.dx * pieceWidth, pos.dy * pieceHeight, pieceWidth, pieceHeight);
+                    ctx.strokeStyle = '#00f3ff';
+                    ctx.strokeRect(pos.dx * pieceWidth, pos.dy * pieceHeight, pieceWidth, pieceHeight);
+                }
+            };
+            img.onerror = () => {
+                ctx.fillStyle = '#ff007f';
+                ctx.font = '12px Orbitron';
+                ctx.fillText('Gagal memuat gambar.', 10, 20);
+                currentPuzzleImageSource = null;
+            };
+        }
+
+        function renderItemList() {
+            const listEl = document.getElementById('question-list'), countEl = document.getElementById('question-count');
+            listEl.innerHTML = '';
+            createdItems.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-900/90 p-3 rounded-xl text-sm flex justify-between items-center text-slate-200 border border-cyan-500/20 shadow-sm';
+                let typeText, contentText;
+                if (item.type === 'mc') { typeText = 'PG'; contentText = item.question; }
+                else if (item.type === 'fill-in') { typeText = 'Isian'; contentText = item.clue; }
+                else if (item.type === 'picture-puzzle') { typeText = 'Puzzle Gambar'; contentText = 'Gambar Kustom'; }
+                else if (item.type === 'un-jumble') { typeText = 'Unjumble'; contentText = item.answer; }
+                else if (item.type === 'wordsearch') { typeText = 'Wordsearch'; contentText = item.clue || item.words.join(', '); }
+                else if (item.type === 'whack-a-mole') { typeText = 'Whack-a-Mole'; contentText = `Clue: ${item.clue}`; }
+                else if (item.type === 'rank-order') { typeText = 'Urutan Kata'; contentText = item.clue ? `Clue: ${item.clue}` : item.items.join(', '); }
+                else if (item.type === 'hangman') { typeText = 'Hangman'; contentText = `${item.word} (${item.clue})`; }
+                
+                div.innerHTML = `
+                    <div>
+                        <span class="font-bold text-cyan-400 font-orbitron">[${typeText}]</span> 
+                        ${index + 1}. ${contentText.substring(0, 35)}...
+                    </div>
+                    <button onclick="deleteItem(${index})" class="px-2.5 py-1 bg-rose-600/90 hover:bg-rose-600 text-white text-xs rounded-lg font-medium transition">Hapus</button>
+                `;
+                listEl.appendChild(div);
+            });
+            countEl.textContent = createdItems.length; 
+            sendQuizBtn.disabled = createdItems.length === 0;
+            resetGameBtn.disabled = Object.keys(connections).length === 0;
+            downloadAllResultsBtn.disabled = Object.values(studentData).every(s => s.answers.length === 0);
+        }
+        function deleteItem(index) {
+            createdItems.splice(index, 1);
+            renderItemList();
+        }
+        function saveItems() {
+            if (createdItems.length === 0) return showMessageModal("Tidak ada soal untuk disimpan.");
+            const dataStr = JSON.stringify(createdItems, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = 'permainan.json';
+            let linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        function loadItems() {
+            document.getElementById('load-file-input').click();
+        }
+        function handleFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedItems = JSON.parse(e.target.result);
+                    if (Array.isArray(loadedItems)) {
+                        createdItems = loadedItems;
+                        renderItemList();
+                        showMessageModal(`${loadedItems.length} soal berhasil dimuat!`);
+                    } else {
+                        throw new Error("Format file tidak valid.");
+                    }
+                } catch (error) {
+                    showMessageModal(`Gagal memuat file: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function sendGame() {
+            if (createdItems.length === 0) return showMessageModal("Buat setidaknya satu item permainan.");
+            for (const peerId in studentData) studentData[peerId].gameData = createdItems;
+            for (const peerId in connections) connections[peerId].send({ type: 'startGame', payload: createdItems });
+            showMessageModal(`Permainan dengan ${createdItems.length} item berhasil dikirim!`);
+        }
+        function resetGame() {
+            showConfirmationModal('Apakah Anda yakin ingin mereset permainan untuk semua pemain?', (isConfirmed) => {
+                if (isConfirmed) {
+                    for (const peerId in connections) {
+                        if (connections[peerId] && connections[peerId].open) {
+                            connections[peerId].send({ type: 'resetGame' });
+                        }
+                    }
+                    studentData = {};
+                    updateLeaderboard();
+                    renderItemList();
+                    sendQuizBtn.disabled = true;
+                    resetGameBtn.disabled = true;
+                    downloadAllResultsBtn.disabled = true;
+                    showMessageModal('Semua permainan Pemain telah direset.');
+                }
+            });
+        }
+
+        function downloadAllResults() {
+            if (Object.values(studentData).every(s => s.answers.length === 0)) {
+                return showMessageModal("Tidak ada hasil pemain yang dapat diunduh.");
+            }
+
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'temp-pdf-container';
+            tempContainer.style.padding = '20px';
+            tempContainer.style.backgroundColor = '#0f172a';
+            tempContainer.style.color = '#f8fafc';
+            tempContainer.style.width = '210mm';
+            tempContainer.style.minHeight = '297mm';
+            tempContainer.style.boxSizing = 'border-box';
+            document.body.appendChild(tempContainer);
+
+            Object.values(studentData).forEach((data) => {
+                if (data.answers.length > 0) {
+                    const reportSection = document.createElement('div');
+                    reportSection.innerHTML = `
+                        <div style="page-break-after: always; padding: 15px;">
+                            <div style="text-align: center; background-color: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #00f3ff;">
+                                <h2 style="font-size: 24px; font-weight: bold; color: #00f3ff; margin-bottom: 5px;">Laporan Hasil Permainan</h2>
+                                <h3 style="font-size: 20px; font-weight: 600; color: #f8fafc;">${data.name}</h3>
+                                <p style="font-size: 16px; margin-top: 10px; color: #cbd5e1;">Skor Akhir: <span style="font-size: 24px; font-weight: bold; color: #ff007f;">${data.score}</span></p>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${data.answers.map((item, itemIndex) => {
+                                    const isCorrect = item.isCorrect;
+                                    const answerHTML = isCorrect ? `<p style="margin-top: 6px; color: #4ade80; font-weight: 600;">Jawaban: ${item.userAnswer} (Benar)</p>` : `<p style="margin-top: 6px; color: #f87171; font-weight: 600;">Jawabanmu: ${item.userAnswer} (Salah)</p><p style="margin-top: 4px; color: #38bdf8; font-weight: 600;">Jawaban Benar: ${item.correctAnswer}</p>`;
+                                    const timeHTML = (item.totalTime !== undefined) ? `<p style="margin-top: 4px; font-size: 12px; color: #94a3b8;">Waktu yang dihabiskan: ${formatTime(item.totalTime)}</p>` : '';
+                                    return `
+                                        <div style="padding: 14px; border-radius: 10px; border-left: 4px solid ${isCorrect ? '#22c55e' : '#ef4444'}; background-color: #1e293b;">
+                                            <p style="font-weight: bold; color: #f8fafc;">${itemIndex + 1}. ${item.question}</p>
+                                            ${answerHTML}
+                                            ${timeHTML}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                    tempContainer.appendChild(reportSection);
+                }
+            });
+
+            html2canvas(tempContainer, { scale: 2, useCORS: true }).then(canvas => {
+                const { jsPDF } = window.jspdf;
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`Laporan Semua Hasil Permainan.pdf`);
+                document.body.removeChild(tempContainer);
+            });
+        }
+
+        function updateLeaderboard() {
+            const hasResults = Object.values(studentData).some(s => s.answers.length > 0);
+            if (Object.keys(connections).length === 0) { 
+                liveLeaderboardContainerGuru.innerHTML = '<p class="text-slate-500 text-center">Belum ada pemain yang bergabung.</p>'; 
+                resetGameBtn.disabled = true;
+                downloadAllResultsBtn.disabled = true;
+                return;
+            }
+            downloadAllResultsBtn.disabled = !hasResults;
+            resetGameBtn.disabled = false;
+
+            const sortedStudents = Object.values(studentData).sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                const aFinished = a.completionTime !== null;
+                const bFinished = b.completionTime !== null;
+                if (aFinished && !bFinished) return -1;
+                if (!aFinished && bFinished) return 1;
+                if (aFinished && bFinished) return a.completionTime - b.completionTime;
+                return b.progress - a.progress;
+            });
+            renderLeaderboard(liveLeaderboardContainerGuru, sortedStudents);
+        }
+
+        function formatTime(ms) {
+            if (ms === null || ms === undefined) return '';
+            const minutes = Math.floor(ms / 60000);
+            const seconds = ((ms % 60000) / 1000).toFixed(1);
+            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function renderLeaderboard(container, sortedData) {
+            container.innerHTML = '';
+            sortedData.forEach((data, index) => {
+                const resultEntry = document.createElement('div');
+                resultEntry.className = 'leaderboard-entry bg-slate-900/90 p-4 rounded-xl border border-cyan-500/30 flex justify-between items-center shadow-lg';
+                
+                let statusHTML;
+                if (data.completionTime !== null) {
+                    statusHTML = `<p class="text-sm font-bold text-emerald-400 font-orbitron">Waktu: ${formatTime(data.completionTime)}</p>`;
+                } else {
+                    const progressText = data.gameData.length > 0 ? `${data.progress} / ${data.gameData.length}` : '0 / 0';
+                    statusHTML = `<p class="text-sm text-slate-400">Progres: ${progressText}</p>`;
+                }
+                
+                let detailedTime = '';
+                const lastAnswer = data.answers[data.answers.length - 1];
+                if (lastAnswer && lastAnswer.totalTime !== undefined) {
+                    detailedTime = `<p class="mt-1 text-xs text-slate-500">Total Waktu: ${formatTime(lastAnswer.totalTime)}</p>`;
+                }
+
+                const detailButton = container.id === 'live-leaderboard-container-guru' ? `<button onclick="showResultModal(studentData['${data.id}'])" class="btn btn-cyber-cyan px-3 py-1 text-xs rounded-lg font-semibold mt-1">Detail</button>` : '';
+                const kickButton = container.id === 'live-leaderboard-container-guru' ? `<button onclick="kickPlayer('${data.id}')" class="btn px-3 py-1 bg-rose-600/90 hover:bg-rose-600 text-white text-xs rounded-lg font-semibold mt-1 ml-2">Tendang</button>` : '';
+                const resendButton = container.id === 'live-leaderboard-container-guru' ? `<button onclick="resendGameToPlayer('${data.id}')" class="btn px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs rounded-lg font-semibold mt-1 ml-2" ${!connections[data.id] || connections[data.id].open === false ? 'disabled' : ''}>Kirim Ulang</button>` : '';
+
+                resultEntry.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <span class="text-xl font-bold font-orbitron text-glow-cyan w-8 text-center">${index + 1}</span>
+                        <div>
+                            <p class="font-bold text-lg text-slate-100">${data.name} ${data.id === (peer ? peer.id : '') ? '(Anda)' : ''}</p>
+                            ${statusHTML}
+                            ${detailedTime}
+                        </div>
+                    </div>
+                    <div class="text-right flex items-center">
+                        ${detailButton}
+                        ${kickButton}
+                        ${resendButton}
+                        <p class="font-bold text-3xl font-orbitron text-glow-magenta ml-4">${data.score}</p>
+                    </div>`;
+                container.appendChild(resultEntry);
+            });
+        }
+
+        function launchGame(gameData, conn) {
+            let currentPage = 0;
+            const startTime = Date.now();
+            let itemStartTime = 0;
+
+            siswaView.innerHTML = `<div id="game-area-player" class="w-full"></div>`;
+            
+            function renderCurrentItem() {
+                if (currentPage >= gameData.length) { finishGame(); return; }
+                
+                const item = gameData[currentPage], gameArea = document.getElementById('game-area-player');
+                itemStartTime = Date.now();
+
+                let contentHTML = `<p class="text-center text-slate-400 mb-4 font-semibold font-orbitron">Item ${currentPage + 1} dari ${gameData.length}</p>`;
+                
+                if (item.type === 'mc') {
+                    contentHTML += `
+                        <div class="mb-6"><p class="text-xl sm:text-2xl font-bold text-center text-slate-100">${item.question}</p></div>
+                        <div class="space-y-3 max-w-lg mx-auto">
+                            ${item.options.map((option, index) => `<button class="btn block w-full text-left p-4 rounded-xl font-medium border border-cyan-500/30 bg-slate-900/80 text-slate-200 hover:bg-slate-800 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(0,243,255,0.3)]" onclick="window.submitAnswer(${index})">${option}</button>`).join('')}
+                        </div>`;
+                } else if (item.type === 'fill-in') {
+                    contentHTML += `
+                        <div class="mb-6"><p class="text-xl font-bold text-center text-slate-100">${item.clue}</p></div>
+                        <div class="space-y-4 mt-6 max-w-md mx-auto">
+                            <input type="text" id="player-answer-input" placeholder="Ketik jawabanmu..." class="w-full p-4 border text-center text-lg rounded-xl">
+                            <button class="btn btn-cyber-magenta w-full px-6 py-4 rounded-xl text-lg font-orbitron" onclick="window.submitAnswer()">KIRIM JAWABAN</button>
+                        </div>`;
+                } else if (item.type === 'picture-puzzle') {
+                    contentHTML += `
+                        <div class="flex flex-col items-center">
+                            <p class="mb-3 font-semibold text-slate-200">Susun potongan gambar berikut!</p>
+                            <canvas id="puzzle-canvas" width="360" height="360" class="border rounded-xl shadow-lg"></canvas>
+                            <p id="puzzle-feedback" class="text-rose-400 font-bold mt-2 h-6"></p>
+                            <button id="submit-puzzle-btn" class="btn btn-cyber-cyan mt-4 px-8 py-3 rounded-xl text-lg font-orbitron">Kirim Jawaban</button>
+                        </div>
+                    `;
+                } else if (item.type === 'un-jumble') {
+                    const pieces = item.scrambled.split(item.unjumbleType === 'word' ? '' : ' ');
+                    const isWord = item.unjumbleType === 'word';
+                    contentHTML += `
+                        <div class="flex flex-col items-center">
+                            <p class="mb-4 font-semibold text-lg text-center text-slate-200">Susun kata${isWord ? '' : ' atau kalimat'} berikut:</p>
+                            <div id="un-jumble-container" class="flex flex-wrap justify-center gap-2 mb-4 p-4 border border-cyan-400/30 rounded-xl bg-slate-900/80 w-full max-w-lg">
+                                ${pieces.map((piece, index) => `<span class="un-jumble-piece px-4 py-2 border border-cyan-400/40 rounded-full cursor-pointer bg-slate-800 text-cyan-400 font-semibold shadow-md hover:bg-cyan-950" data-index="${index}">${piece}</span>`).join('')}
+                            </div>
+                            <p class="font-semibold text-lg mb-2 text-slate-200">Jawaban Anda:</p>
+                            <div id="un-jumble-answer-display" class="w-full max-w-lg min-h-[50px] p-2 border-2 border-cyan-400 rounded-xl text-center flex flex-wrap gap-2 items-center justify-center bg-slate-950/80 mb-4"></div>
+                            <div class="flex gap-3">
+                                <button id="submit-un-jumble" class="btn btn-cyber-cyan px-8 py-3 rounded-xl font-orbitron">Kirim</button>
+                                <button id="reset-un-jumble" class="btn btn-cyber-dark px-6 py-3 rounded-xl font-semibold">Reset</button>
+                            </div>
+                        </div>`;
+                } else if (item.type === 'wordsearch') {
+                    contentHTML += `
+                        <div class="flex flex-col items-center">
+                            <h3 class="text-2xl font-bold mb-2 font-orbitron text-glow-cyan">Cari Kata</h3>
+                            ${item.clue ? `<p class="text-sm text-slate-300 mb-2 font-medium">Petunjuk: ${item.clue}</p>` : ''}
+                            <p class="text-center text-slate-400 mb-4 text-sm">Temukan semua kata di bawah ini dalam grid!</p>
+                            <div id="wordsearch-grid" class="wordsearch-grid w-full max-w-xl"></div>
+                            <p id="wordsearch-status" class="mt-4 text-lg font-semibold h-8"></p>
+                            <ul id="wordsearch-list" class="wordsearch-list">
+                                ${item.words.map(word => `<li class="wordsearch-word" data-word="${word}">${word}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else if (item.type === 'whack-a-mole') {
+                    contentHTML += `
+                        <div class="flex flex-col items-center text-center">
+                            <h3 class="text-2xl font-bold mb-2 font-orbitron text-glow-magenta">Whack-a-Mole</h3>
+                            <p id="whack-a-mole-clue" class="text-lg font-semibold mb-4 text-cyan-300">${item.clue}</p>
+                            <div id="whack-a-mole-grid"></div>
+                            <div class="mt-4 flex flex-col items-center">
+                                <p class="text-xl font-semibold text-slate-300">Skor: <span id="whack-a-mole-score" class="text-glow-magenta font-orbitron font-bold">0</span></p>
+                            </div>
+                        </div>
+                    `;
+                } else if (item.type === 'rank-order') {
+                    const scrambledItems = item.scrambledItems;
+                    contentHTML += `
+                        <div class="flex flex-col items-center text-center">
+                            <h3 class="text-2xl font-bold mb-2 font-orbitron text-glow-cyan">Urutan Kata</h3>
+                            ${item.clue ? `<p class="text-lg text-slate-300 mb-4 font-medium">Petunjuk: ${item.clue}</p>` : `<p class="text-lg text-slate-300 mb-4">Susun item-item berikut dalam urutan yang benar!</p>`}
+                            <ul id="rank-order-list" class="rank-order-list w-full max-w-md p-2">
+                                ${scrambledItems.map(text => `<li class="rank-order-item" draggable="true">${text}</li>`).join('')}
+                            </ul>
+                            <button id="submit-rank-order" class="btn btn-cyber-cyan mt-6 px-8 py-3 rounded-xl text-lg font-orbitron">Kirim Jawaban</button>
+                        </div>
+                    `;
+                } else if (item.type === 'hangman') {
+                    contentHTML += `
+                        <div class="flex flex-col items-center text-center">
+                            <h3 class="text-2xl font-bold mb-2 font-orbitron text-glow-cyan">Hangman Game</h3>
+                            <canvas id="hangman-canvas" width="200" height="200" class="border rounded-xl mb-2"></canvas>
+                            <p id="hangman-word-display" class="font-orbitron text-3xl sm:text-4xl font-bold tracking-widest my-3"></p>
+                            <p id="hangman-clue" class="text-md text-slate-300 italic mb-2"></p>
+                            <p id="hangman-message" class="text-lg font-semibold h-8"></p>
+                            <div id="hangman-keyboard" class="grid grid-cols-7 gap-2 mt-2 max-w-md w-full"></div>
+                        </div>
+                    `;
+                }
+                gameArea.innerHTML = contentHTML;
+                if (item.type === 'picture-puzzle') {
+                    startPicturePuzzle(item, conn, itemStartTime);
+                } else if (item.type === 'un-jumble') {
+                    startUnjumbleGame(item, conn, itemStartTime);
+                } else if (item.type === 'wordsearch') {
+                    startWordsearchGame(item, conn, itemStartTime);
+                } else if (item.type === 'whack-a-mole') {
+                    startWhackAMoleGame(item, conn, itemStartTime);
+                } else if (item.type === 'rank-order') {
+                    startRankOrderGame(item, conn, itemStartTime);
+                } else if (item.type === 'hangman') {
+                    startHangmanGame(item, conn, itemStartTime);
+                }
+            }
+
+            function showFeedbackAndNext(isCorrect, feedbackMessage) {
+                const finalMessage = feedbackMessage || (isCorrect ? 'BENAR! 🎉' : 'SALAH!');
+                const color = isCorrect ? 'text-glow-cyan' : 'text-glow-magenta';
+                const gameArea = document.getElementById('game-area-player');
+                
+                gameArea.innerHTML = `<p class="text-3xl sm:text-5xl text-center font-orbitron font-extrabold p-16 ${color}">${finalMessage}</p>`;
+
+                setTimeout(() => {
+                    currentPage++; 
+                    renderCurrentItem(); 
+                }, 1500); 
+            }
+
+            window.submitAnswer = (selectedIndex) => {
+                const item = gameData[currentPage]; 
+                let isCorrect, userAnswer, correctAnswer, questionText;
+                
+                const attemptTime = Date.now() - itemStartTime;
+                item.totalTime += attemptTime;
+
+                if (item.type === 'mc') {
+                    isCorrect = selectedIndex === item.answer; 
+                    userAnswer = item.options[selectedIndex]; 
+                    correctAnswer = item.options[item.answer]; 
+                    questionText = item.question;
+                } else {
+                    const input = document.getElementById('player-answer-input').value; 
+                    if (!input.trim()) return showMessageModal("Jawaban kosong!");
+                    isCorrect = input.trim().toLowerCase() === item.answer.trim().toLowerCase(); 
+                    userAnswer = input; 
+                    correctAnswer = item.answer; 
+                    questionText = item.clue;
+                }
+
+                if(isCorrect) {
+                    conn.send({ 
+                        type: 'updateProgress', 
+                        payload: { 
+                            progress: currentPage + 1,
+                            lastAnswer: { 
+                                question: questionText, 
+                                userAnswer, 
+                                correctAnswer, 
+                                isCorrect, 
+                                type: item.type, 
+                                totalTime: item.totalTime
+                            } 
+                        } 
+                    });
+                    showFeedbackAndNext(isCorrect);
+                } else {
+                    conn.send({ 
+                        type: 'updateProgress', 
+                        payload: { 
+                            progress: currentPage, 
+                            lastAnswer: { 
+                                question: questionText, 
+                                userAnswer, 
+                                correctAnswer, 
+                                isCorrect, 
+                                type: item.type,
+                                totalTime: item.totalTime
+                            } 
+                        } 
+                    });
+                    showFeedbackAndNext(isCorrect, `Salah! Jawaban Benar: ${correctAnswer}`);
+                }
+            };
+
+            function finishGame() { 
+                const completionTime = Date.now() - startTime;
+                conn.send({ type: 'finishGame', payload: { completionTime } });
+                document.getElementById('game-area-player').innerHTML = `
+                    <div class="text-center p-8">
+                        <h2 class="text-3xl sm:text-4xl font-extrabold font-orbitron text-glow-cyan mb-4">PERMAINAN SELESAI! 🎉</h2>
+                        <p class="text-lg text-slate-300">Terima kasih telah bermain. Hasil Anda telah terkirim ke Pembuat.</p>
+                    </div>`; 
+            }
+
+            function startPicturePuzzle(item, conn, startTime) {
+                const canvas = document.getElementById('puzzle-canvas'), ctx = canvas.getContext('2d');
+                const [cols, rows] = item.gridSize.split('x').map(Number);
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                
+                img.src = item.imageUrl.startsWith('data:image') ? item.imageUrl : `https://proxy.cors.sh/${item.imageUrl}`;
+                
+                let pieces = [], pieceWidth, pieceHeight, selectedPiece = null;
+                const picturePuzzleStartTime = startTime || Date.now();
+
+                img.onload = () => {
+                    pieceWidth = canvas.width / cols; pieceHeight = canvas.height / rows;
+                    for (let i = 0; i < rows * cols; i++) {
+                        const sx = i % cols;
+                        const sy = Math.floor(i / cols);
+                        const pos = item.shuffledOrder[i];
+                        pieces.push({ sx, sy, dx: pos.dx, dy: pos.dy, correctX: sx, correctY: sy });
+                    }
+                    drawPuzzle();
+                };
+                img.onerror = () => { ctx.fillStyle = '#ff007f'; ctx.font = '16px Orbitron'; ctx.fillText('Gagal memuat gambar.', 20, 40); };
+
+                function drawPuzzle() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    pieces.forEach(p => {
+                        ctx.drawImage(img, p.sx * (img.width/cols), p.sy * (img.height/rows), img.width/cols, img.height/rows, p.dx * pieceWidth, p.dy * pieceHeight, pieceWidth, pieceHeight);
+                        ctx.strokeStyle = '#00f3ff';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(p.dx * pieceWidth, p.dy * pieceHeight, pieceWidth, pieceHeight);
+                    });
+                }
+
+                canvas.addEventListener('click', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = Math.floor((e.clientX - rect.left) / pieceWidth), y = Math.floor((e.clientY - rect.top) / pieceHeight);
+                    const clickedPiece = pieces.find(p => p.dx === x && p.dy === y);
+                    if (!selectedPiece) {
+                        selectedPiece = clickedPiece;
+                        ctx.fillStyle = 'rgba(0, 243, 255, 0.4)';
+                        ctx.fillRect(selectedPiece.dx * pieceWidth, selectedPiece.dy * pieceHeight, pieceWidth, pieceHeight);
+                    } else {
+                        if (selectedPiece !== clickedPiece) {
+                            [selectedPiece.dx, clickedPiece.dx] = [clickedPiece.dx, selectedPiece.dx];
+                            [selectedPiece.dy, clickedPiece.dy] = [clickedPiece.dy, selectedPiece.dy];
+                        }
+                        selectedPiece = null;
+                        drawPuzzle();
+                    }
+                });
+
+                document.getElementById('submit-puzzle-btn').onclick = function() {
+                    const isWin = pieces.every(p => p.dx === p.correctX && p.dy === p.correctY);
+                    
+                    const attemptTime = Date.now() - picturePuzzleStartTime;
+                    item.totalTime += attemptTime;
+
+                    if (isWin) {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage + 1, 
+                                lastAnswer: { 
+                                    question: `Puzzle Gambar`, 
+                                    userAnswer: 'Selesai', 
+                                    correctAnswer: 'Selesai', 
+                                    isCorrect: true, 
+                                    type: item.type, 
+                                    points: 10,
+                                    totalTime: item.totalTime
+                                } 
+                            } 
+                        });
+                        showFeedbackAndNext(true, "Puzzle Lengkap!");
+                    } else {
+                         conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage, 
+                                lastAnswer: { 
+                                    question: `Puzzle Gambar`, 
+                                    userAnswer: 'Tidak Selesai', 
+                                    correctAnswer: 'Selesai', 
+                                    isCorrect: false, 
+                                    type: item.type,
+                                    points: 0,
+                                    totalTime: item.totalTime
+                                } 
+                            } 
+                        });
+                        showFeedbackAndNext(false, 'Masih salah! Lanjut ke soal berikutnya.');
+                    }
+                };
+            }
+            
+            function startUnjumbleGame(item, conn, startTime) {
+                const unjumbleContainer = document.getElementById('un-jumble-container');
+                const answerDisplay = document.getElementById('un-jumble-answer-display');
+                const submitBtn = document.getElementById('submit-un-jumble');
+                const resetBtn = document.getElementById('reset-un-jumble');
+
+                let pieces = [];
+                const unjumbleStartTime = startTime || Date.now();
+
+                unjumbleContainer.addEventListener('click', (e) => {
+                    const clickedElement = e.target.closest('.un-jumble-piece');
+                    if (clickedElement && clickedElement.style.display !== 'none') {
+                        const pieceText = clickedElement.textContent;
+                        pieces.push(pieceText);
+                        answerDisplay.innerHTML += `<span class="px-4 py-2 border border-cyan-400/50 rounded-full bg-cyan-950 text-cyan-300 font-semibold shadow-md">${pieceText}</span>`;
+                        clickedElement.style.display = 'none';
+                    }
+                });
+
+                resetBtn.addEventListener('click', () => {
+                    pieces.length = 0;
+                    answerDisplay.innerHTML = '';
+                    document.querySelectorAll('.un-jumble-piece').forEach(el => el.style.display = 'inline-block');
+                });
+
+                submitBtn.addEventListener('click', () => {
+                    const userAnswer = pieces.join(item.unjumbleType === 'word' ? '' : ' ');
+                    const isCorrect = userAnswer.toLowerCase() === item.answer.toLowerCase();
+
+                    const attemptTime = Date.now() - unjumbleStartTime;
+                    item.totalTime += attemptTime;
+
+                    if (isCorrect) {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage + 1,
+                                lastAnswer: { 
+                                    question: `Unjumble: ${item.scrambled}`, 
+                                    userAnswer: userAnswer, 
+                                    correctAnswer: item.answer, 
+                                    isCorrect: isCorrect, 
+                                    type: item.type,
+                                    points: 10,
+                                    totalTime: item.totalTime
+                                }
+                            } 
+                        });
+                        showFeedbackAndNext(isCorrect, 'Urutan Benar! 🎉');
+                    } else {
+                         conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage,
+                                lastAnswer: { 
+                                    question: `Unjumble: ${item.scrambled}`, 
+                                    userAnswer: userAnswer, 
+                                    correctAnswer: item.answer, 
+                                    isCorrect: isCorrect, 
+                                    type: item.type,
+                                    points: 0,
+                                    totalTime: item.totalTime
+                                }
+                            }
+                        });
+                        showFeedbackAndNext(false, `Urutan salah! Jawaban Benar: ${item.answer}`);
+                    }
+                });
+            }
+
+            function startWordsearchGame(item, conn, startTime) {
+                const gridEl = document.getElementById('wordsearch-grid');
+                const wordListEl = document.getElementById('wordsearch-list');
+                const statusEl = document.getElementById('wordsearch-status');
+
+                let selectedCells = [];
+                let isDragging = false;
+                let foundWords = new Set();
+                const gridData = item.grid;
+                const wordsToFind = item.words;
+                const wordsearchStartTime = startTime || Date.now();
+
+                gridEl.innerHTML = '';
+                gridData.forEach((row, y) => {
+                    row.forEach((letter, x) => {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.textContent = letter;
+                        cell.dataset.x = x;
+                        cell.dataset.y = y;
+                        gridEl.appendChild(cell);
+                    });
+                });
+
+                gridEl.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    isDragging = true;
+                    selectedCells = [];
+                    const startCell = e.target.closest('.grid-cell');
+                    if (startCell) {
+                        selectedCells.push(startCell);
+                        startCell.classList.add('selected');
+                    }
+                });
+
+                gridEl.addEventListener('pointerover', (e) => {
+                    if (!isDragging) return;
+                    const hoverCell = e.target.closest('.grid-cell');
+                    if (!hoverCell) return;
+
+                    const startCell = selectedCells[0];
+                    if (!startCell) return;
+
+                    document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
+                    
+                    const path = getPath(startCell, hoverCell);
+                    path.forEach(cell => cell.classList.add('selected'));
+                    selectedCells = path;
+                });
+
+                gridEl.addEventListener('pointerup', () => {
+                    isDragging = false;
+                    
+                    if (selectedCells.length < 2) {
+                        document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
+                        return;
+                    }
+
+                    const selectedWord = selectedCells.map(cell => cell.textContent).join('');
+                    const reversedWord = selectedCells.map(cell => cell.textContent).reverse().join('');
+                    
+                    let foundWord = false;
+                    if (wordsToFind.includes(selectedWord) && !foundWords.has(selectedWord)) {
+                        foundWord = selectedWord;
+                    } else if (wordsToFind.includes(reversedWord) && !foundWords.has(reversedWord)) {
+                        foundWord = reversedWord;
+                    }
+                    
+                    const attemptTime = Date.now() - wordsearchStartTime;
+                    item.totalTime += attemptTime;
+
+                    if (foundWord) {
+                        foundWords.add(foundWord);
+                        selectedCells.forEach(cell => cell.classList.add('word-found'));
+                        const foundWordEl = document.querySelector(`.wordsearch-word[data-word="${foundWord}"]`) || document.querySelector(`.wordsearch-word[data-word="${reversedWord}"]`);
+                        if (foundWordEl) {
+                             foundWordEl.classList.add('found');
+                        }
+                        
+                        statusEl.textContent = `Ditemukan: ${foundWord}`;
+                        statusEl.style.color = 'var(--cyber-cyan)';
+                        
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage, 
+                                lastAnswer: { 
+                                    question: `Wordsearch`, 
+                                    userAnswer: foundWord, 
+                                    correctAnswer: foundWord, 
+                                    isCorrect: true, 
+                                    type: item.type,
+                                    points: 5,
+                                    totalTime: item.totalTime
+                                } 
+                            } 
+                        });
+
+                        if (foundWords.size === wordsToFind.length) {
+                            setTimeout(() => {
+                                conn.send({ 
+                                    type: 'updateProgress', 
+                                    payload: { 
+                                        progress: currentPage + 1,
+                                        lastAnswer: { 
+                                            question: `Wordsearch`, 
+                                            userAnswer: 'Semua kata ditemukan', 
+                                            correctAnswer: 'Selesai', 
+                                            isCorrect: true, 
+                                            type: item.type,
+                                            points: 20,
+                                            totalTime: item.totalTime
+                                        } 
+                                    } 
+                                });
+                                showFeedbackAndNext(true, "Wordsearch Selesai!");
+                            }, 1000);
+                        } else {
+                            setTimeout(() => {
+                                statusEl.textContent = '';
+                                statusEl.style.color = '';
+                                document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
+                                selectedCells = [];
+                            }, 1200);
+                        }
+                    } else {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage, 
+                                lastAnswer: { 
+                                    question: `Wordsearch`, 
+                                    userAnswer: selectedWord, 
+                                    correctAnswer: 'Semua Kata Tersembunyi', 
+                                    isCorrect: false, 
+                                    type: item.type,
+                                    points: 0,
+                                    totalTime: item.totalTime
+                                } 
+                            } 
+                        });
+                        showFeedbackAndNext(false, `Bukan kata tersembunyi: ${selectedWord}. Lanjut ke soal berikutnya.`);
+                        document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
+                        selectedCells = [];
+                    }
+                });
+
+                function getPath(start, end) {
+                    const startX = parseInt(start.dataset.x);
+                    const startY = parseInt(start.dataset.y);
+                    const endX = parseInt(end.dataset.x);
+                    const endY = parseInt(end.dataset.y);
+
+                    const dx = endX - startX;
+                    const dy = endY - startY;
+
+                    const absDx = Math.abs(dx);
+                    const absDy = Math.abs(dy);
+
+                    if (absDx !== absDy && dx !== 0 && dy !== 0) {
+                        return [start];
+                    }
+
+                    const path = [];
+                    const stepX = dx === 0 ? 0 : dx / absDx;
+                    const stepY = dy === 0 ? 0 : dy / absDy;
+                    
+                    let currX = startX;
+                    let currY = startY;
+
+                    while (true) {
+                        const nextCell = document.querySelector(`[data-x="${currX}"][data-y="${currY}"]`);
+                        if(nextCell){
+                            path.push(nextCell);
+                        }
+                        if (currX === endX && currY === endY) break;
+                        currX += stepX;
+                        currY += stepY;
+                    }
+                    return path;
+                }
+            }
+
+            function startWhackAMoleGame(item, conn, startTime) {
+                const grid = document.getElementById('whack-a-mole-grid');
+                const scoreEl = document.getElementById('whack-a-mole-score');
+                const clueEl = document.getElementById('whack-a-mole-clue');
+                
+                let score = 0;
+                
+                function setupGrid() {
+                    grid.innerHTML = '';
+                    for (let i = 0; i < 9; i++) {
+                        const hole = document.createElement('div');
+                        hole.className = 'mole-hole';
+                        hole.dataset.index = i;
+                        grid.appendChild(hole);
+                    }
+                }
+
+                function spawnMoles() {
+                    const allAnswers = [item.correctAnswer, ...item.incorrectAnswers];
+                    
+                    for (let i = allAnswers.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [allAnswers[i], allAnswers[j]] = [allAnswers[j], allAnswers[i]];
+                    }
+
+                    const holes = document.querySelectorAll('.mole-hole');
+                    holes.forEach((hole, index) => {
+                        let moleContent = index < allAnswers.length ? allAnswers[index] : "---";
+                        const isCorrect = (moleContent === item.correctAnswer);
+
+                        const moleEl = document.createElement('div');
+                        moleEl.className = 'mole';
+                        moleEl.textContent = moleContent;
+                        moleEl.dataset.isCorrect = isCorrect;
+                        hole.appendChild(moleEl);
+                        
+                        setTimeout(() => moleEl.classList.add('up'), 100 * index);
+                    });
+                }
+                
+                function handleMoleClick(e) {
+                    const mole = e.target.closest('.mole');
+                    if (!mole) return;
+                    
+                    mole.classList.remove('up');
+                    const isCorrect = mole.dataset.isCorrect === 'true';
+
+                    if (isCorrect) {
+                        score += 10;
+                        scoreEl.textContent = score;
+                        endQuestion(true, mole.textContent);
+                    } else {
+                        score = Math.max(0, score - 5);
+                        scoreEl.textContent = score;
+                        endQuestion(false, mole.textContent);
+                    }
+                    grid.removeEventListener('click', handleMoleClick);
+                }
+
+                function endQuestion(isCorrect, userAnswer) {
+                    const attemptTime = Date.now() - itemStartTime;
+                    item.totalTime += attemptTime;
+
+                    if (isCorrect) {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage + 1,
+                                lastAnswer: { 
+                                    question: item.clue, 
+                                    userAnswer: userAnswer, 
+                                    correctAnswer: item.correctAnswer, 
+                                    isCorrect: true, 
+                                    type: item.type,
+                                    points: 10,
+                                    totalTime: item.totalTime
+                                } 
+                            } 
+                        });
+                        showFeedbackAndNext(true, 'Jawaban benar! 🎉');
+                    } else {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage,
+                                lastAnswer: { 
+                                    question: item.clue, 
+                                    userAnswer: userAnswer, 
+                                    correctAnswer: item.correctAnswer, 
+                                    isCorrect: false, 
+                                    type: item.type,
+                                    points: 0,
+                                    totalTime: item.totalTime
+                                }
+                            } 
+                        });
+                        showFeedbackAndNext(false, `Jawaban salah. Jawaban Benar: ${item.correctAnswer}`);
+                    }
+                }
+
+                clueEl.textContent = item.clue;
+                setupGrid();
+                spawnMoles();
+                grid.addEventListener('click', handleMoleClick);
+            }
+            
+            function startRankOrderGame(item, conn, startTime) {
+                const listEl = document.getElementById('rank-order-list');
+                const submitBtn = document.getElementById('submit-rank-order');
+                
+                let draggedItem = null;
+                const rankOrderStartTime = startTime || Date.now();
+
+                listEl.addEventListener('dragstart', (e) => {
+                    draggedItem = e.target;
+                    e.dataTransfer.effectAllowed = 'move';
+                    setTimeout(() => {
+                        draggedItem.classList.add('dragging');
+                    }, 0);
+                });
+
+                listEl.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const targetItem = e.target.closest('.rank-order-item');
+                    if (targetItem && targetItem !== draggedItem) {
+                        const allItems = [...listEl.children];
+                        const draggedIndex = allItems.indexOf(draggedItem);
+                        const targetIndex = allItems.indexOf(targetItem);
+                        
+                        if (draggedIndex < targetIndex) {
+                            listEl.insertBefore(draggedItem, targetItem.nextSibling);
+                        } else {
+                            listEl.insertBefore(draggedItem, targetItem);
+                        }
+                    }
+                });
+
+                listEl.addEventListener('dragend', () => {
+                    if (draggedItem) {
+                        draggedItem.classList.remove('dragging');
+                        draggedItem = null;
+                    }
+                });
+                
+                submitBtn.addEventListener('click', () => {
+                    const currentOrder = [...listEl.children].map(li => li.textContent);
+                    const isCorrect = JSON.stringify(currentOrder) === JSON.stringify(item.items);
+                    
+                    const attemptTime = Date.now() - rankOrderStartTime;
+                    item.totalTime += attemptTime;
+
+                    if (isCorrect) {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage + 1,
+                                lastAnswer: { 
+                                    question: `Urutan Kata`, 
+                                    userAnswer: currentOrder.join(', '), 
+                                    correctAnswer: item.items.join(', '), 
+                                    isCorrect: isCorrect, 
+                                    type: item.type,
+                                    points: 10,
+                                    totalTime: item.totalTime
+                                }
+                            } 
+                        });
+                        showFeedbackAndNext(isCorrect, 'Urutan Benar! 🎉');
+                    } else {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage,
+                                lastAnswer: { 
+                                    question: `Urutan Kata`, 
+                                    userAnswer: currentOrder.join(', '), 
+                                    correctAnswer: item.items.join(', '), 
+                                    isCorrect: isCorrect, 
+                                    type: item.type,
+                                    points: 0,
+                                    totalTime: item.totalTime
+                                }
+                            }
+                        });
+                        showFeedbackAndNext(false, `Urutan salah! Jawaban Benar: ${item.items.join(', ')}`);
+                    }
+                });
+            }
+
+            function startHangmanGame(item, conn, startTime) {
+                const canvas = document.getElementById("hangman-canvas");
+                const ctx = canvas.getContext("2d");
+                const wordDisplay = document.getElementById("hangman-word-display");
+                const clueDisplay = document.getElementById("hangman-clue");
+                const messageDisplay = document.getElementById("hangman-message");
+                const keyboard = document.getElementById("hangman-keyboard");
+
+                const selectedWord = item.word;
+                const selectedClue = item.clue;
+                let guessedLetters = [];
+                let mistakes = 0;
+                const maxMistakes = 6;
+                let hangmanStartTime = startTime || Date.now();
+
+                function updateWordDisplay() {
+                    wordDisplay.textContent = selectedWord
+                        .split("")
+                        .map(letter => guessedLetters.includes(letter) ? letter : "_")
+                        .join(" ");
+                }
+
+                function drawHangman() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "#00f3ff";
+                    ctx.shadowColor = "#00f3ff";
+                    ctx.shadowBlur = 8;
+
+                    // Base
+                    ctx.beginPath(); ctx.moveTo(20, 180); ctx.lineTo(180, 180); ctx.stroke();
+                    // Pole
+                    ctx.beginPath(); ctx.moveTo(50, 180); ctx.lineTo(50, 20); ctx.stroke();
+                    // Beam
+                    ctx.beginPath(); ctx.moveTo(50, 20); ctx.lineTo(120, 20); ctx.stroke();
+                    // Rope
+                    ctx.beginPath(); ctx.moveTo(120, 20); ctx.lineTo(120, 40); ctx.stroke();
+
+                    if (mistakes > 0) { // Head
+                        ctx.beginPath(); ctx.arc(120, 60, 20, 0, Math.PI * 2); ctx.stroke();
+                    }
+                    if (mistakes > 1) { // Body
+                        ctx.beginPath(); ctx.moveTo(120, 80); ctx.lineTo(120, 120); ctx.stroke();
+                    }
+                    if (mistakes > 2) { // Left Arm
+                        ctx.beginPath(); ctx.moveTo(120, 90); ctx.lineTo(100, 110); ctx.stroke();
+                    }
+                    if (mistakes > 3) { // Right Arm
+                        ctx.beginPath(); ctx.moveTo(120, 90); ctx.lineTo(140, 110); ctx.stroke();
+                    }
+                    if (mistakes > 4) { // Left Leg
+                        ctx.beginPath(); ctx.moveTo(120, 120); ctx.lineTo(100, 150); ctx.stroke();
+                    }
+                    if (mistakes > 5) { // Right Leg
+                        ctx.beginPath(); ctx.moveTo(120, 120); ctx.lineTo(140, 150); ctx.stroke();
+                    }
+                }
+
+                function createKeyboard() {
+                    keyboard.innerHTML = "";
+                    for (let i = 65; i <= 90; i++) {
+                        const letter = String.fromCharCode(i);
+                        const button = document.createElement("button");
+                        button.textContent = letter;
+                        button.className = "key py-2 text-sm font-orbitron shadow hover:shadow-cyan-400/50";
+                        button.addEventListener("click", () => guessLetter(letter, button));
+                        keyboard.appendChild(button);
+                    }
+                }
+
+                function guessLetter(letter, button) {
+                    if (button.disabled) return;
+                    
+                    button.disabled = true;
+
+                    if (!guessedLetters.includes(letter)) {
+                        guessedLetters.push(letter);
+                    }
+
+                    const isCorrectGuess = selectedWord.includes(letter);
+                    if (!isCorrectGuess) {
+                        mistakes++;
+                        drawHangman();
+                    }
+                    
+                    updateWordDisplay();
+                    checkGameStatus(isCorrectGuess, letter);
+                }
+
+                function checkGameStatus(isCorrectGuess, lastGuessedLetter) {
+                    const currentWord = wordDisplay.textContent.replace(/ /g, '');
+                    const isWin = currentWord === selectedWord;
+                    const isLose = mistakes >= maxMistakes;
+                    
+                    const attemptTime = Date.now() - hangmanStartTime;
+                    item.totalTime += attemptTime;
+
+                    if (isWin) {
+                        messageDisplay.textContent = "Selamat! Anda menang!";
+                        messageDisplay.className = 'text-lg font-semibold h-8 text-cyan-400 font-orbitron';
+                        keyboard.querySelectorAll('.key').forEach(btn => btn.disabled = true);
+                        
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage + 1,
+                                lastAnswer: {
+                                    question: `Hangman: ${selectedWord}`,
+                                    userAnswer: 'Menang',
+                                    correctAnswer: selectedWord,
+                                    isCorrect: true,
+                                    type: item.type,
+                                    points: 10,
+                                    totalTime: item.totalTime
+                                }
+                            }
+                        });
+
+                        setTimeout(() => { currentPage++; renderCurrentItem(); }, 2000);
+                    } else if (isLose) {
+                        messageDisplay.textContent = `Game Over! Kata yang benar: ${selectedWord}`;
+                        messageDisplay.className = 'text-lg font-semibold h-8 text-rose-500 font-orbitron';
+                        keyboard.querySelectorAll('.key').forEach(btn => btn.disabled = true);
+                        
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage, 
+                                lastAnswer: {
+                                    question: `Hangman: ${selectedWord}`,
+                                    userAnswer: `Kalah (Tebakan: ${lastGuessedLetter})`,
+                                    correctAnswer: selectedWord,
+                                    isCorrect: false,
+                                    type: item.type,
+                                    points: 0,
+                                    totalTime: item.totalTime
+                                }
+                            }
+                        });
+
+                        setTimeout(() => { 
+                            currentPage++;
+                            renderCurrentItem(); 
+                        }, 2500); 
+                    } else if (isCorrectGuess) {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage,
+                                lastAnswer: {
+                                    question: `Hangman: ${selectedWord}`,
+                                    userAnswer: lastGuessedLetter,
+                                    correctAnswer: selectedWord,
+                                    isCorrect: true,
+                                    type: item.type,
+                                    points: 1,
+                                    totalTime: item.totalTime
+                                }
+                            }
+                        });
+                    } else {
+                        conn.send({ 
+                            type: 'updateProgress', 
+                            payload: { 
+                                progress: currentPage,
+                                lastAnswer: {
+                                    question: `Hangman: ${selectedWord}`,
+                                    userAnswer: lastGuessedLetter,
+                                    correctAnswer: selectedWord,
+                                    isCorrect: false,
+                                    type: item.type,
+                                    points: 0,
+                                    totalTime: item.totalTime
+                                }
+                            }
+                        });
+                    }
+                }
+
+                clueDisplay.textContent = `Petunjuk: ${selectedClue}`;
+                updateWordDisplay();
+                drawHangman();
+                createKeyboard();
+                messageDisplay.textContent = "";
+            }
+            
+            renderCurrentItem();
+        }
+
+        function showResultModal(data) { displayDetailedResults(modalContentBody, data); downloadPdfBtn.onclick = () => downloadPDF(data.name); resultModal.classList.remove('hidden'); }
+        function closeResultModal() { resultModal.classList.add('hidden'); }
+        function downloadPDF(studentName) {
+            const { jsPDF } = window.jspdf; const contentToPrint = document.getElementById('modal-content-body');
+            html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png'), pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth(), pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); pdf.save(`Hasil Permainan - ${studentName}.pdf`);
+            });
+        }
+        function displayDetailedResults(container, data, clearContainer = true) {
+            if (clearContainer) {
+                container.innerHTML = '';
+            }
+            
+            const mainReport = document.createElement('div');
+            mainReport.innerHTML = `
+                <div class="text-center bg-slate-900 p-6 rounded-xl shadow-lg mb-6 border border-cyan-400/40">
+                    <h2 class="text-2xl font-bold font-orbitron text-center mb-1 text-glow-cyan">Laporan Hasil Permainan</h2>
+                    <p class="text-xl font-semibold text-slate-200">${data.name}</p>
+                    <p class="text-md font-semibold mt-3 text-slate-400">Skor Akhir:</p>
+                    <p class="text-5xl font-bold font-orbitron text-glow-magenta my-2">${data.score}</p>
+                    ${data.completionTime !== null ? `<p class="text-sm font-semibold text-cyan-400 font-orbitron">Total Waktu Penyelesaian: ${formatTime(data.completionTime)}</p>` : ''}
+                </div>
+            `;
+            container.appendChild(mainReport);
+
+            const detailsContainer = document.createElement('div'); detailsContainer.className = 'space-y-3';
+            data.answers.forEach((item, index) => {
+                const resultItem = document.createElement('div');
+                const isCorrect = item.isCorrect;
+                resultItem.className = `p-4 rounded-xl border-l-4 ${isCorrect ? 'border-emerald-500 bg-slate-900/90' : 'border-rose-500 bg-slate-900/90'}`;
+                const answerHTML = isCorrect ? `<p class="mt-2 text-emerald-400 font-semibold">Jawaban: ${item.userAnswer} (Benar)</p>` : `<p class="mt-2 text-rose-400 font-semibold">Jawabanmu: ${item.userAnswer} (Salah)</p><p class="mt-1 text-cyan-400 font-semibold">Jawaban Benar: ${item.correctAnswer}</p>`;
+                
+                let timeHTML = '';
+                if (item.totalTime !== undefined) {
+                    timeHTML = `<p class="mt-1 text-xs text-slate-400">Waktu yang dihabiskan: ${formatTime(item.totalTime)}</p>`;
+                }
+                
+                let clueHTML = '';
+                const itemData = createdItems.find(i => i.type === item.type && (i.question === item.question || i.clue === item.question));
+
+                if (itemData && itemData.clue) {
+                    clueHTML = `<p class="mt-1 text-xs text-slate-400">Petunjuk: ${itemData.clue}</p>`;
+                } else if (itemData && item.type === 'hangman') {
+                    clueHTML = `<p class="mt-1 text-xs text-slate-400">Petunjuk: ${itemData.clue}</p>`;
+                }
+                
+                resultItem.innerHTML = `<p class="font-bold text-slate-200">${index + 1}. ${item.question}</p>${answerHTML}${clueHTML}${timeHTML}`;
+                detailsContainer.appendChild(resultItem);
+            });
+            container.appendChild(detailsContainer);
+        }
+    </script>
+</body>
+</html>
